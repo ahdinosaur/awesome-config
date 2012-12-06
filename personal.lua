@@ -1,8 +1,8 @@
-terminal = 'aterm' -- can be app in path, or full path e.g. /usr/bin/xterm
+terminal = os.getenv("HOME") .. '/bin/term' -- can be app in path, or full path e.g. /usr/bin/xterm
 editor = "vim"
 
 altkey = "Mod1"
-modkey = "Mod1" -- "Mod4" -- your windows/apple key
+modkey = "Mod4" -- your windows/apple key
 
 wallpaper_dir = os.getenv("HOME") .. "/wallpapers/" -- grabs a random bg
 
