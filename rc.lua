@@ -17,37 +17,35 @@ require("naughty")
 -- User libraries
 require("vicious") -- ./vicious
 require("helpers") -- helpers.lua
+local keydoc = require("keydoc")
 -- }}}
 
 -- {{{ Default configuration
+
+terminal = os.getenv("HOME") .. '/bin/term' -- can be app in path, or full path e.g. /usr/bin/xterm
+editor = "vim"
+web_browser = "firefox"
+
 altkey = "Mod1"
 modkey = "Mod4" -- your windows/apple key
 
-terminal = whereis_app('urxvtcd') and 'urxvtcd' or 'x-terminal-emulator' -- also accepts full path
-editor = os.getenv("EDITOR") or "vim"
-editor_cmd = terminal .. " -e " .. editor
+wallpaper_dir = os.getenv("HOME") .. "/images/wallpapers" -- grabs a random bg
 
-wallpaper_app = "feh" -- if you want to check for app before trying
-wallpaper_dir = os.getenv("HOME") .. "/Pictures/Wallpaper" -- wallpaper dir
+taglist_numbers = "arabic" -- we support arabic (1,2,3...),
+-- arabic, chinese, {east|persian}_arabic, roman, thai, random
 
--- taglist numerals
---- arabic, chinese, {east|persian}_arabic, roman, thai, random
-taglist_numbers = "chinese" -- we support arabic (1,2,3...),
-
-cpugraph_enable = true -- Show CPU graph
+cpugraph_enable = true -- show CPU graph
 cputext_format = " $1%" -- %1 average cpu, %[2..] every other thread individually
 
-membar_enable = true -- Show memory bar
+membar_enable = true -- show memory bar
 memtext_format = " $1%" -- %1 percentage, %2 used %3 total %4 free
 
 date_format = "%a %m/%d/%Y %l:%M%p" -- refer to http://en.wikipedia.org/wiki/Date_(Unix) specifiers
 
-networks = {'eth0'} -- add your devices network interface here netwidget, only shows first one thats up.
-
-require_safe('personal')
+networks = {'eth0', 'wlan0'} -- Add your devices network interface here netwidget, only show one that works
 
 -- Create personal.lua in this same directory to override these defaults
-
+require_safe('personal')
 
 -- }}}
 
@@ -60,15 +58,57 @@ local sexec  = awful.util.spawn_with_shell
 -- Beautiful theme
 beautiful.init(awful.util.getdir("config") .. "/themes/zhongguo/zhongguo.lua")
 
+-- {{{ Main Menu
+myawesomemenu = {
+   { "manual", terminal .. " -e man awesome" },
+   { "edit config", editor .. " " .. awesome.conffile },
+   { "reload", awesome.restart },
+   { "quit", awesome.quit },
+   { "reboot", "reboot" },
+   { "shutdown", "shutdown" }
+}
+
+appsmenu = {
+   { "firefox", "firefox" },
+   { "thunar", "thunar" },
+   { "htop", terminal .. " -e htop" },
+}
+
+gamesmenu = {
+   { "warsow", "warsow" },
+   { "nexuiz", "nexuiz" },
+   { "xonotic", "xonotic" },
+   { "openarena", "openarena" },
+   { "alienarena", "alienarena" },
+   { "teeworlds", "teeworlds" },
+   { "frozen-bubble", "frozen-bubble" },
+   { "warzone2100", "warzone2100" },
+   { "wesnoth", "wesnoth" },
+   { "supertuxkart", "supertuxkart" },
+   { "xmoto" , "xmoto" },
+   { "flightgear", "flightgear" },
+   { "snes9x" , "snes9x" },
+
+}
+
+mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu },
+                                    { "apps", appsmenu },
+				    { "games", gamesmenu },
+                                    { "terminal", terminal },
+				    { "web browser", web_browser },
+				    { "text editor", geditor }
+                                  }
+                        })
+
 -- Window management layouts
 layouts = {
   awful.layout.suit.tile,
   awful.layout.suit.tile.bottom,
   awful.layout.suit.tile.top,
-  --awful.layout.suit.fair,
+  awful.layout.suit.fair,
   awful.layout.suit.max,
   awful.layout.suit.magnifier,
-  --awful.layout.suit.floating
+  awful.layout.suit.floating
 }
 -- }}}
 
@@ -272,7 +312,7 @@ vicious.register(volbar,    vicious.widgets.volume,  "$1",  2, "PCM")
 vicious.register(volwidget, vicious.widgets.volume, " $1%", 2, "PCM")
 -- Register buttons
 volbar.widget:buttons(awful.util.table.join(
-   awful.button({ }, 1, function () exec("kmix") end),
+   awful.button({ }, 1, function () sexec("alsamixer") end),
    awful.button({ }, 4, function () exec("amixer -q set PCM 2dB+", false) vicious.force({volbar, volwidget}) end),
    awful.button({ }, 5, function () exec("amixer -q set PCM 2dB-", false) vicious.force({volbar, volwidget}) end)
 )) -- Register assigned buttons
@@ -388,64 +428,89 @@ clientbuttons = awful.util.table.join(
 
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
-    awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
-    awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ),
-    awful.key({ modkey,           }, "Escape", awful.tag.history.restore),
+    keydoc.group("focus"),
+    awful.key({ modkey,           }, "Left",   awful.tag.viewprev,
+              "view previous tag"),
+    awful.key({ modkey,           }, "Right",  awful.tag.viewnext,
+              "view next tag"),
+    awful.key({ modkey,           }, "Escape", awful.tag.history.restore,
+              "view last accessed tag"),
 
     awful.key({ modkey,           }, "j",
         function ()
             awful.client.focus.byidx( 1)
             if client.focus then client.focus:raise() end
-        end),
+        end,
+	"focus next window"),
     awful.key({ modkey,           }, "k",
         function ()
             awful.client.focus.byidx(-1)
             if client.focus then client.focus:raise() end
-        end),
-    awful.key({ modkey,           }, "w", function () mymainmenu:show({keygrabber=true}) end),
-
-    -- Layout manipulation
-    awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
-    awful.key({ modkey, "Shift"   }, "k", function () awful.client.swap.byidx( -1)    end),
-    awful.key({ modkey, "Control" }, "j", function () awful.screen.focus_relative( 1) end),
-    awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end),
-    awful.key({ modkey,           }, "u", awful.client.urgent.jumpto),
+        end,
+	"focus previous window"),
+    awful.key({ modkey,           }, "w", function () mymainmenu:show({keygrabber=true}) end,
+              "show menu"),
+    awful.key({ modkey, "Control" }, "j", function () awful.screen.focus_relative( 1) end,
+              "jump to next screen"),
+    awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end,
+              "jump to previous screen"),
+    awful.key({ modkey,           }, "u", awful.client.urgent.jumpto,
+              "jump to urgent client"),
     awful.key({ modkey,           }, "Tab",
         function ()
             awful.client.focus.history.previous()
             if client.focus then
                 client.focus:raise()
             end
-        end),
+        end,
+	"focus previously unfocused window"),
 
-    -- Standard program
-    awful.key({ modkey, "Shift"   }, "Return", function () awful.util.spawn(terminal) end),
-    awful.key({ modkey, "Control" }, "r", awesome.restart),
-    awful.key({ modkey, "Shift"   }, "q", awesome.quit),
-
-    awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end),
-    awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end),
-    awful.key({ modkey,           }, ",",     function () awful.tag.incnmaster( 1)      end),
-    awful.key({ modkey,           }, ".",     function () awful.tag.incnmaster(-1)      end),
-    awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end),
-    awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
-    awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end),
-    awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
-
+    -- Layout manipulation
+    keydoc.group("layout manipulation"),
+    awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end,
+              "swap with next window"),
+    awful.key({ modkey, "Shift"   }, "k", function () awful.client.swap.byidx( -1)    end,
+              "swap with previous window"),
+    awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end,
+              "increase master-width factor"),
+    awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end,
+              "decrease master-width factor"),
+    awful.key({ modkey, "Shift"   }, "l",     function () awful.tag.incnmaster( 1)      end,
+              "increase number of masters"),
+    awful.key({ modkey, "Shift"   }, "h",     function () awful.tag.incnmaster(-1)      end,
+              "decrease number of masters"),
+    awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end,
+              "increase number of columns"),
+    awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end,
+              "decrease number of columns"),
+    awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end,
+              "next layout"),
+    awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end,
+              "previous layout"),
     awful.key({ modkey }, "b", function ()
          wibox[mouse.screen].visible = not wibox[mouse.screen].visible
-    end),
+    end, "remove awesome widget bar"),
 
-    -- Prompt
-    awful.key({ modkey },            "r",     function () promptbox[mouse.screen]:run() end),
-
+    -- Standard program
+    keydoc.group("programs"),
+    awful.key({ modkey,	          }, "Return", function () exec(terminal) end,
+              "start a terminal"),
+    awful.key({ modkey,           }, "\\", function () exec(web_browser) end,
+              "start a web browser"),
+    awful.key({ modkey }, "r",     function () promptbox[mouse.screen]:run() end,
+             "run program"),
     awful.key({ modkey }, "x",
               function ()
                   awful.prompt.run({ prompt = "Run Lua code: " },
                   mypromptbox[mouse.screen].widget,
                   awful.util.eval, nil,
                   awful.util.getdir("cache") .. "/history_eval")
-              end)
+              end, "run lua code"),
+    awful.key({ modkey, "Control" }, "r", awesome.restart, "restart awesome"),
+    awful.key({ modkey, "Shift"   }, "q", awesome.quit, "quit awesome"),
+
+
+    awful.key({ modkey }, "q", keydoc.display, "display this notifcation")
 )
 
 clientkeys = awful.util.table.join(
