@@ -1,3 +1,6 @@
+local awful = require("awful")
+local naughty = require("naughty")
+
 -- {{{ Helper functions
 
 function run_once(prg,arg_string,pname,screen)

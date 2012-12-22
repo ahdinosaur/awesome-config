@@ -3,6 +3,9 @@
 -- Awesome configuration, using awesome 3.4.10 on Ubuntu 11.10
 --   * Tony N <tony@git-pull.com>
 --
+-- Personalized and extended by
+--   * Michael W <dinosaur@riseup.net>
+--
 -- This work is licensed under the Creative Commons Attribution-Share
 -- Alike License: http://creativecommons.org/licenses/by-sa/3.0/
 -- based off Adrian C. <anrxc@sysphere.org>'s rc.lua
@@ -10,14 +13,16 @@
 
 
 -- {{{ Libraries
-require("awful")
-require("awful.rules")
-require("awful.autofocus")
-require("naughty")
+local awful = require("awful")
+local awful_rules = require("awful.rules")
+local awful_autofocus = require("awful.autofocus")
+local naughty = require("naughty")
+local beautiful = require("beautiful")
+local wibox = require("wibox")
 -- User libraries
-require("vicious") -- ./vicious
-require("helpers") -- helpers.lua
-require("bashets") -- http://awesome.naquadah.org/wiki/Bashets
+local vicious = require("vicious") -- ./vicious
+local helpers = require("helpers") -- helpers.lua
+local bashets = require("bashets") -- http://awesome.naquadah.org/wiki/Bashets
 
 local keydoc = require("keydoc")
 -- }}}
@@ -150,18 +155,18 @@ end
 -- {{{ Widgets configuration
 --
 -- {{{ Reusable separator
-separator = widget({ type = "imagebox" })
-separator.image = image(beautiful.widget_sep)
+separator = wibox.widget.imagebox
+separator:set_image(beautiful.widget_sep)
 
-spacer = widget({ type = "textbox" })
+spacer = wibox.widget.textbox
 spacer.width = 3
 -- }}}
 
 -- {{{ CPU usage
 
 -- cpu icon
-cpuicon = widget({ type = "imagebox" })
-cpuicon.image = image(beautiful.widget_cpu)
+cpuicon = wibox.widget.imagebox
+cpuicon:set_image(beautiful.widget_cpu)
 
 -- check for cpugraph_enable == true in config
 if cpugraph_enable then
@@ -180,11 +185,11 @@ if cpugraph_enable then
 end
 
 -- cpu text widget
-cpuwidget = widget({ type = "textbox" }) -- initialize
+cpuwidget = wibox.widget.textbox -- initialize
 vicious.register(cpuwidget, vicious.widgets.cpu, cputext_format, 3) -- register
 
 -- temperature
-tzswidget = widget({ type = "textbox" })
+tzswidget = wibox.widget.textbox
 vicious.register(tzswidget, vicious.widgets.thermal,
 	function (widget, args)
 		if args[1] > 0 then
@@ -201,15 +206,15 @@ vicious.register(tzswidget, vicious.widgets.thermal,
 -- {{{ Battery state
 
 -- Initialize widget
-batwidget = widget({ type = "textbox" })
-baticon = widget({ type = "imagebox" })
+batwidget = wibox.widget.textbox
+baticon = wibox.widget.imagebox
 
 -- Register widget
 vicious.register(batwidget, vicious.widgets.bat,
 	function (widget, args)
 		if args[2] == 0 then return ""
 		else
-			baticon.image = image(beautiful.widget_bat)
+			baticon:set_image(beautiful.widget_bat)
 			return "<span color='white'>".. args[2] .. "%</span>"
 		end
 	end, 61, "BAT0"
@@ -220,8 +225,8 @@ vicious.register(batwidget, vicious.widgets.bat,
 -- {{{ Memory usage
 
 -- icon
-memicon = widget({ type = "imagebox" })
-memicon.image = image(beautiful.widget_mem)
+memicon = wibox.widget.imagebox
+memicon:set_image(beautiful.widget_mem)
 
 if membar_enable then
 	-- Initialize widget
@@ -237,13 +242,13 @@ if membar_enable then
 end
 
 -- mem text output
-memtext = widget({ type = "textbox" })
+memtext = wibox.widget.textbox
 vicious.register(memtext, vicious.widgets.mem, memtext_format, 13)
 -- }}}
 
 -- {{{ File system usage
-fsicon = widget({ type = "imagebox" })
-fsicon.image = image(beautiful.widget_fs)
+fsicon = wibox.widget.imagebox
+fsicon:set_image(beautiful.widget_fs)
 -- Initialize widgets
 fs = {
   r = awful.widget.progressbar(), s = awful.widget.progressbar()
@@ -274,19 +279,19 @@ function print_net(name, down, up)
 	.. beautiful.fg_netup_widget ..'">' .. up  .. '</span>'
 end
 
-dnicon = widget({ type = "imagebox" })
-upicon = widget({ type = "imagebox" })
+dnicon = wibox.widget.imagebox
+upicon = wibox.widget.imagebox
 
 -- Initialize widget
-netwidget = widget({ type = "textbox" })
+netwidget = wibox.widget.textbox
 -- Register widget
 vicious.register(netwidget, vicious.widgets.net,
 	function (widget, args)
 		for _,device in pairs(networks) do
 			if tonumber(args["{".. device .." carrier}"]) > 0 then
 				netwidget.found = true
-				dnicon.image = image(beautiful.widget_net)
-				upicon.image = image(beautiful.widget_netup)
+				dnicon:set_image(beautiful.widget_net)
+				upicon:set_image(beautiful.widget_netup)
 				return print_net(device, args["{"..device .." down_kb}"], args["{"..device.." up_kb}"])
 			end
 		end
@@ -296,11 +301,11 @@ vicious.register(netwidget, vicious.widgets.net,
 
 
 -- {{{ Volume level
-volicon = widget({ type = "imagebox" })
-volicon.image = image(beautiful.widget_vol)
+volicon = wibox.widget.imagebox
+volicon:set_image(beautiful.widget_vol)
 -- Initialize widgets
 volbar    = awful.widget.progressbar()
-volwidget = widget({ type = "textbox" })
+volwidget = wibox.widget.textbox
 -- Progressbar properties
 volbar:set_vertical(true):set_ticks(true)
 volbar:set_height(16):set_width(8):set_ticks_size(2)
@@ -322,10 +327,10 @@ volwidget:buttons(volbar.widget:buttons())
 -- }}}
 
 -- {{{ Date and time
-dateicon = widget({ type = "imagebox" })
-dateicon.image = image(beautiful.widget_date)
+dateicon = wibox.widget.imagebox
+dateicon:set_image(beautiful.widget_date)
 -- Initialize widget
-datewidget = widget({ type = "textbox" })
+datewidget = wibox.widget.textbox
 -- Register widget
 vicious.register(datewidget, vicious.widgets.date, date_format, 61)
 -- }}}
@@ -353,12 +358,12 @@ kbdcfg = {}
 kbdcfg.cmd = "setxkbmap"
 kbdcfg.layout = { "us", "colemak", "de" }
 kbdcfg.current = 1  -- us is our default layout
-kbdcfg.widget = widget({ type = "textbox", align = "right" })
-kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+kbdcfg.widget = wibox.widget.textbox
+kbdcfg.widget:set_text(" " .. kbdcfg.layout[kbdcfg.current] .. " ")
 kbdcfg.switch = function ()
    kbdcfg.current = kbdcfg.current % #(kbdcfg.layout) + 1
    local t = " " .. kbdcfg.layout[kbdcfg.current] .. " "
-   kbdcfg.widget.text = t
+   kbdcfg.widget:set_text(t)
    os.execute( kbdcfg.cmd .. t )
 end
 
@@ -370,7 +375,7 @@ kbdcfg.widget:buttons(awful.util.table.join(
 
 
 -- {{{ System tray
-systray = widget({ type = "systray" })
+systray = wibox.widget.systray
 -- }}}
 -- }}}
 
@@ -618,7 +623,7 @@ awful.rules.rules = {
 -- {{{ Signals
 --
 -- {{{ Manage signal handler
-client.add_signal("manage", function (c, startup)
+client.connect_signal("manage", function (c, startup)
     -- Add titlebar to floaters, but remove those from rule callback
     if awful.client.floating.get(c)
     or awful.layout.get(c.screen) == awful.layout.suit.floating then
@@ -627,7 +632,7 @@ client.add_signal("manage", function (c, startup)
     end
 
     -- Enable sloppy focus
-    c:add_signal("mouse::enter", function (c)
+    c:connect_signal("mouse::enter", function (c)
         if  awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
         and awful.client.focus.filter(c) then
             client.focus = c
@@ -648,12 +653,12 @@ end)
 -- }}}
 
 -- {{{ Focus signal handlers
-client.add_signal("focus",   function (c) c.border_color = beautiful.border_focus  end)
-client.add_signal("unfocus", function (c) c.border_color = beautiful.border_normal end)
+client.connect_signal("focus",   function (c) c.border_color = beautiful.border_focus  end)
+client.connect_signal("unfocus", function (c) c.border_color = beautiful.border_normal end)
 -- }}}
 
 -- {{{ Arrange signal handler
-for s = 1, screen.count() do screen[s]:add_signal("arrange", function ()
+for s = 1, screen.count() do screen[s]:connect_signal("arrange", function ()
     local clients = awful.client.visible(s)
     local layout = awful.layout.getname(awful.layout.get(s))
 
@@ -671,7 +676,7 @@ x = 0
 
 -- setup the timer
 mytimer = timer { timeout = x }
-mytimer:add_signal("timeout", function()
+mytimer:connect_signal("timeout", function()
 
   -- tell awsetbg to randomly choose a wallpaper from your wallpaper directory
   if file_exists(wallpaper_dir) and whereis_app('feh') then
