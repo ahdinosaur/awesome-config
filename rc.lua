@@ -17,6 +17,8 @@ require("naughty")
 -- User libraries
 require("vicious") -- ./vicious
 require("helpers") -- helpers.lua
+require("bashets") -- http://awesome.naquadah.org/wiki/Bashets
+
 local keydoc = require("keydoc")
 -- }}}
 
@@ -345,6 +347,27 @@ end
 
 -- }}}
 
+-- {{{
+-- Keyboard map indicator and changer
+kbdcfg = {}
+kbdcfg.cmd = "setxkbmap"
+kbdcfg.layout = { "us", "colemak", "de" }
+kbdcfg.current = 1  -- us is our default layout
+kbdcfg.widget = widget({ type = "textbox", align = "right" })
+kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+kbdcfg.switch = function ()
+   kbdcfg.current = kbdcfg.current % #(kbdcfg.layout) + 1
+   local t = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+   kbdcfg.widget.text = t
+   os.execute( kbdcfg.cmd .. t )
+end
+
+-- Mouse bindings
+kbdcfg.widget:buttons(awful.util.table.join(
+    awful.button({ }, 1, function () kbdcfg.switch() end)
+))
+-- }}}
+
 
 -- {{{ System tray
 systray = widget({ type = "systray" })
@@ -367,6 +390,8 @@ taglist.buttons = awful.util.table.join(
 
 
 for s = 1, screen.count() do
+    -- Create the taglist
+    taglist[s] = awful.widget.taglist(s, awful.widget.taglist.label.all, taglist.buttons)
     -- Create a promptbox
     promptbox[s] = awful.widget.prompt({ layout = awful.widget.layout.horizontal.leftright })
     -- Create a layoutbox
@@ -377,9 +402,6 @@ for s = 1, screen.count() do
         awful.button({ }, 4, function () awful.layout.inc(layouts,  1) end),
         awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)
     ))
-
-    -- Create the taglist
-    taglist[s] = awful.widget.taglist(s, awful.widget.taglist.label.all, taglist.buttons)
     -- Create the wibox
     wibox[s] = awful.wibox({      screen = s,
         fg = beautiful.fg_normal, height = 16,
@@ -390,7 +412,7 @@ for s = 1, screen.count() do
     -- Add widgets to the wibox
     wibox[s].widgets = {
         {   taglist[s], layoutbox[s], separator, promptbox[s],
-            mpdwidget and spacer, mpdwidget or nil,
+            mpdwidget and spacer, mpdwidget or nil, --kbdcfg.widget,
             ["layout"] = awful.widget.layout.horizontal.leftright
         },
         --s == screen.count() and systray or nil, -- show tray on last screen
